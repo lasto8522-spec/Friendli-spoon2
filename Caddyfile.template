@@ -26,7 +26,7 @@
         header Upgrade    websocket
     }
     handle @ws {
-        reverse_proxy 127.0.0.1:10000 {
+        reverse_proxy 127.0.0.1:${XRAY_PORT} {
             header_up Host {host}
             header_up X-Real-IP {remote_host}
             transport http {
@@ -37,7 +37,7 @@
 
     # ---- Веб-страница с QR / подпиской (Flask) ----
     handle ${SUB_PATH}* {
-        reverse_proxy 127.0.0.1:8080 {
+        reverse_proxy 127.0.0.1:${FLASK_PORT} {
             header_up Host {host}
             header_up X-Forwarded-Proto https
         }

@@ -6,7 +6,7 @@
     {
       "tag": "vless-ws-in",
       "listen": "127.0.0.1",
-      "port": 10000,
+      "port": ${XRAY_PORT},
       "protocol": "vless",
       "settings": {
         "clients": [

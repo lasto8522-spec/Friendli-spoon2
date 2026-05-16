@@ -299,4 +299,7 @@ if _sub_prefix():
 
 if __name__ == "__main__":
     # bind только на loopback — наружу торчит только Caddy.
-    app.run(host="127.0.0.1", port=8080, threaded=True)
+    # Порт берём из FLASK_PORT, чтобы не конфликтовать с Railway $PORT,
+    # на котором висит Caddy.
+    port = int(os.environ.get("FLASK_PORT", "10001"))
+    app.run(host="127.0.0.1", port=port, threaded=True)

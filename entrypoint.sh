@@ -44,23 +44,31 @@ gen_token() {
 : "${PROFILE_NAME:=Railway-VPN}"
 : "${PORT:=8080}"
 
+# Внутренние порты для XRay/Flask. Сдвигаем, если Railway вдруг
+# назначит $PORT == один из них (маловероятно, но всякое бывает).
+XRAY_PORT=10000
+FLASK_PORT=10001
+[[ "${PORT}" == "${XRAY_PORT}"  ]] && XRAY_PORT=20000
+[[ "${PORT}" == "${FLASK_PORT}" ]] && FLASK_PORT=20001
+
 # нормализуем пути (должны начинаться с /, без хвостового /)
 [[ "${WS_PATH}"  != /* ]] && WS_PATH="/${WS_PATH}"
 [[ "${SUB_PATH}" != /* ]] && SUB_PATH="/${SUB_PATH}"
 WS_PATH="${WS_PATH%/}"
 SUB_PATH="${SUB_PATH%/}"
 
-export VLESS_UUID WS_PATH SUB_PATH BASIC_AUTH_USER BASIC_AUTH_PASS PROFILE_NAME PORT
+export VLESS_UUID WS_PATH SUB_PATH BASIC_AUTH_USER BASIC_AUTH_PASS \
+       PROFILE_NAME PORT XRAY_PORT FLASK_PORT
 
 # ---------- 3. Рендерим конфиги ----------
 RUNTIME=/tmp/runtime
 mkdir -p "${RUNTIME}"
 
-envsubst '${VLESS_UUID} ${WS_PATH}' \
+envsubst '${VLESS_UUID} ${WS_PATH} ${XRAY_PORT}' \
   < /app/xray-config.template.json \
   > "${RUNTIME}/xray-config.json"
 
-envsubst '${PORT} ${WS_PATH} ${SUB_PATH}' \
+envsubst '${PORT} ${WS_PATH} ${SUB_PATH} ${XRAY_PORT} ${FLASK_PORT}' \
   < /app/Caddyfile.template \
   > "${RUNTIME}/Caddyfile"
 
