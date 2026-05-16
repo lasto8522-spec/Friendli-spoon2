@@ -1,0 +1,74 @@
+{
+    # Railway terminates TLS at edge → внутри говорим plain HTTP.
+    auto_https off
+    admin off
+    persist_config off
+    log {
+        output stdout
+        format console
+        level WARN
+    }
+    servers {
+        protocols h1 h2c
+    }
+}
+
+:${PORT} {
+    # ---- health-check для Railway ----
+    handle /healthz {
+        respond "ok" 200
+    }
+
+    # ---- WebSocket-туннель в XRay ----
+    @ws {
+        path ${WS_PATH}
+        header Connection *Upgrade*
+        header Upgrade    websocket
+    }
+    handle @ws {
+        reverse_proxy 127.0.0.1:10000 {
+            header_up Host {host}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            transport http {
+                versions h1
+            }
+        }
+    }
+
+    # ---- Веб-страница с QR / подпиской (Flask) ----
+    handle ${SUB_PATH}* {
+        reverse_proxy 127.0.0.1:8080 {
+            header_up Host {host}
+            header_up X-Forwarded-Proto https
+        }
+    }
+
+    # ---- Decoy: всё остальное прикидываемся обычным nginx ----
+    handle {
+        header Server "nginx/1.24.0"
+        header -X-Powered-By
+        header Content-Type "text/html; charset=UTF-8"
+        respond `<!DOCTYPE html>
+<html>
+<head>
+<title>Welcome to nginx!</title>
+<style>
+    body { width: 35em; margin: 0 auto; font-family: Tahoma, Verdana, Arial, sans-serif; }
+</style>
+</head>
+<body>
+<h1>Welcome to nginx!</h1>
+<p>If you see this page, the nginx web server is successfully installed and
+working. Further configuration is required.</p>
+
+<p>For online documentation and support please refer to
+<a href="http://nginx.org/">nginx.org</a>.<br/>
+Commercial support is available at
+<a href="http://nginx.com/">nginx.com</a>.</p>
+
+<p><em>Thank you for using nginx.</em></p>
+</body>
+</html>` 200
+    }
+}

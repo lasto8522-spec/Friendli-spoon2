@@ -1,0 +1,13 @@
+# Все шелл-скрипты и конфиги — только LF, иначе ломается в Linux-контейнере
+*.sh           text eol=lf
+Dockerfile     text eol=lf
+*.template     text eol=lf
+*.toml         text eol=lf
+*.json         text eol=lf
+*.py           text eol=lf
+*.html         text eol=lf
+*.md           text eol=lf
+*.txt          text eol=lf
+.env.example   text eol=lf
+.gitignore     text eol=lf
+.gitattributes text eol=lf

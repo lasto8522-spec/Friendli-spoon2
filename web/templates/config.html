@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ profile }} — VPN config</title>
+  <style>
+    :root {
+      --bg: #0e1116;
+      --card: #161b22;
+      --border: #30363d;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --accent: #2f81f7;
+      --accent-h: #58a6ff;
+      --code: #1f2937;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .wrap { width: 100%; max-width: 720px; }
+    h1 {
+      font-size: 22px;
+      margin: 0 0 4px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: #3fb950; box-shadow: 0 0 8px #3fb950;
+    }
+    .host { color: var(--muted); font-size: 13px; margin-bottom: 18px; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+    .qr {
+      display: flex;
+      justify-content: center;
+      padding: 16px;
+      background: #fff;
+      border-radius: 10px;
+    }
+    .qr img { width: 100%; max-width: 280px; height: auto; image-rendering: pixelated; }
+    label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+    .field {
+      display: flex; gap: 8px; margin-top: 6px;
+    }
+    .field input {
+      flex: 1; min-width: 0;
+      background: var(--code);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 10px 12px;
+      border-radius: 8px;
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+      font-size: 12px;
+    }
+    button, .btn {
+      background: var(--accent); color: white; border: 0;
+      padding: 10px 14px; border-radius: 8px;
+      cursor: pointer; font-weight: 600; font-size: 13px;
+      text-decoration: none; display: inline-flex; align-items: center; gap: 6px;
+    }
+    button:hover, .btn:hover { background: var(--accent-h); }
+    .ghost { background: transparent; border: 1px solid var(--border); color: var(--text); }
+    .ghost:hover { background: var(--code); }
+    .row + .row { margin-top: 14px; }
+    .grid { display: grid; gap: 8px; grid-template-columns: 1fr 1fr; }
+    @media (max-width: 520px) { .grid { grid-template-columns: 1fr; } }
+    .clients h3 { margin: 0 0 8px; font-size: 14px; }
+    .clients ul { margin: 0; padding-left: 18px; color: var(--muted); font-size: 13px; line-height: 1.7; }
+    .clients a { color: var(--accent-h); text-decoration: none; }
+    .clients a:hover { text-decoration: underline; }
+    .note {
+      font-size: 12px; color: var(--muted); margin-top: 8px; line-height: 1.5;
+    }
+    code { background: var(--code); padding: 1px 6px; border-radius: 4px; font-size: 12px; }
+    .badge {
+      display: inline-block;
+      background: rgba(63, 185, 80, 0.15);
+      color: #3fb950;
+      border: 1px solid rgba(63, 185, 80, 0.3);
+      padding: 1px 7px;
+      border-radius: 10px;
+      font-size: 10px;
+      font-weight: 600;
+      margin-left: 6px;
+      vertical-align: middle;
+      text-transform: none;
+      letter-spacing: 0;
+    }
+  </style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1><span class="dot"></span>{{ profile }}</h1>
+  <div class="host">{{ host }}</div>
+
+  <div class="card">
+    <div class="qr">
+      <img src="{{ qr_url }}" alt="QR-код конфига VLESS">
+    </div>
+    <div class="note">
+      Отсканируйте QR в v2rayNG / Hiddify / Streisand — конфиг импортируется автоматически.
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="row">
+      <label>VLESS-ссылка</label>
+      <div class="field">
+        <input id="link" type="text" readonly value="{{ link }}">
+        <button onclick="copy('link', this)">Копировать</button>
+      </div>
+    </div>
+
+    <div class="row">
+      <label>Subscription — v2ray (v2rayNG / NekoBox / Streisand)</label>
+      <div class="field">
+        <input id="sub" type="text" readonly value="{{ sub_url }}">
+        <button onclick="copy('sub', this)">Копировать</button>
+      </div>
+      <div class="note">
+        Без split-routing — весь трафик через VPN. Подходит, если VPN используется не в РФ.
+      </div>
+    </div>
+
+    <div class="row">
+      <label>Subscription — Clash <span class="badge">⚡ для РФ</span></label>
+      <div class="field">
+        <input id="clash" type="text" readonly value="{{ clash_url }}">
+        <button onclick="copy('clash', this)">Копировать</button>
+      </div>
+      <div class="note">
+        Mihomo / Clash.Meta со <b>split-routing</b>: Сбер, Яндекс, Госуслуги,
+        банки, маркетплейсы и весь <code>geoip:ru</code> идут <b>напрямую</b>,
+        мимо VPN. Так их анти-VPN-фильтры не сработают.
+        Поддержка: Hiddify, Mihomo Party, Stash, ClashX Meta, v2rayN Pro.
+      </div>
+    </div>
+
+    <div class="row grid">
+      <a class="btn ghost" href="{{ raw_url }}" target="_blank">Plain-text</a>
+      <a class="btn ghost" href="{{ qr_url }}" target="_blank">PNG QR</a>
+    </div>
+  </div>
+
+  <div class="card clients">
+    <h3>Где открыть конфиг</h3>
+    <ul>
+      <li><b>Android</b>: <a href="https://play.google.com/store/apps/details?id=com.v2ray.ang">v2rayNG</a>,
+          <a href="https://github.com/hiddify/hiddify-next/releases">Hiddify</a></li>
+      <li><b>iOS</b>: <a href="https://apps.apple.com/app/streisand/id6450534064">Streisand</a>,
+          <a href="https://apps.apple.com/app/v2box/id6446814690">V2Box</a></li>
+      <li><b>Windows / macOS</b>: <a href="https://github.com/2dust/v2rayN/releases">v2rayN</a>,
+          <a href="https://github.com/hiddify/hiddify-next/releases">Hiddify-Next</a></li>
+      <li><b>Linux</b>: <a href="https://github.com/MatsuriDayo/nekoray/releases">NekoRay</a></li>
+    </ul>
+    <div class="note">
+      Транспорт: <code>WebSocket + TLS</code> (TLS терминируется на edge Railway,
+      внутри контейнера — чистый WS). DPI видит обычный HTTPS-трафик к
+      <code>*.up.railway.app</code>.
+    </div>
+  </div>
+
+</div>
+
+<script>
+function copy(id, btn) {
+  const el = document.getElementById(id);
+  el.select(); el.setSelectionRange(0, 99999);
+  navigator.clipboard.writeText(el.value).then(() => {
+    const old = btn.textContent;
+    btn.textContent = 'Скопировано';
+    setTimeout(() => btn.textContent = old, 1500);
+  });
+}
+</script>
+</body>
+</html>
