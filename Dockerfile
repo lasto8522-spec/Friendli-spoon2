@@ -48,13 +48,10 @@ COPY --from=xray-builder /opt/xray/geoip.dat    /usr/local/share/xray/geoip.dat
 COPY --from=xray-builder /opt/xray/geosite.dat  /usr/local/share/xray/geosite.dat
 ENV XRAY_LOCATION_ASSET=/usr/local/share/xray
 
-# Список РФ-доменов (UnRKN/ru-blocklist) — для блокировки на сервере,
-# чтобы наш Railway-IP не светился в логах российских сервисов.
-ARG RU_BLOCKLIST_REF=main
-RUN curl -fsSL \
-      "https://raw.githubusercontent.com/UnRKN/ru-blocklist/${RU_BLOCKLIST_REF}/ru-blocklist-extended-domain.dat" \
-      -o /usr/local/share/xray/ru-blocklist.dat \
- && test -s /usr/local/share/xray/ru-blocklist.dat
+# Раньше тут скачивался UnRKN/ru-blocklist, но в нём оказалось много
+# глобальных трекеров (googleapis.com, ad SDK), которые ломали YouTube/
+# WhatsApp/etc. Теперь блок-лист РФ-сервисов жёстко прописан в
+# xray-config (см. routing.rules) — короче, безопаснее, без сюрпризов.
 
 WORKDIR /app
 

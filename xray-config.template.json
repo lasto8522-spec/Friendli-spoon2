@@ -96,7 +96,25 @@
       },
       {
         "type": "field",
-        "domain": ["ext:ru-blocklist.dat:RU"],
+        "domain": [
+          "domain:sberbank.ru",
+          "domain:sber.ru",
+          "domain:sbrf.ru",
+          "domain:vtb.ru",
+          "domain:alfabank.ru",
+          "domain:tinkoff.ru",
+          "domain:t-bank.ru",
+          "domain:gazprombank.ru",
+          "domain:raiffeisen.ru",
+          "domain:gosuslugi.ru",
+          "domain:nalog.ru",
+          "domain:mos.ru",
+          "domain:ozon.ru",
+          "domain:wildberries.ru",
+          "domain:wb.ru",
+          "domain:avito.ru",
+          "domain:cian.ru"
+        ],
         "outboundTag": "block"
       }
     ]
