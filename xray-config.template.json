@@ -52,7 +52,13 @@
         "security": "none",
         "wsSettings": {
           "path": "${WS_PATH}",
-          "headers": {}
+          "headers": {},
+          "maxEarlyData": 2048,
+          "earlyDataHeaderName": "Sec-WebSocket-Protocol"
+        },
+        "sockopt": {
+          "tcpKeepAliveInterval": 30,
+          "tcpNoDelay": true
         }
       },
       "sniffing": {
@@ -69,6 +75,12 @@
       "protocol": "freedom",
       "settings": {
         "domainStrategy": "UseIPv4"
+      },
+      "streamSettings": {
+        "sockopt": {
+          "tcpKeepAliveInterval": 30,
+          "tcpNoDelay": true
+        }
       }
     },
     {
@@ -123,15 +135,17 @@
     "levels": {
       "0": {
         "handshake": 4,
-        "connIdle": 300,
-        "uplinkOnly": 2,
-        "downlinkOnly": 5,
-        "bufferSize": 4
+        "connIdle": 600,
+        "uplinkOnly": 5,
+        "downlinkOnly": 30,
+        "bufferSize": 64
       }
     },
     "system": {
       "statsInboundUplink": false,
-      "statsInboundDownlink": false
+      "statsInboundDownlink": false,
+      "statsOutboundUplink": false,
+      "statsOutboundDownlink": false
     }
   }
 }

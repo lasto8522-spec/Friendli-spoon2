@@ -76,10 +76,36 @@ def _clash_yaml(host: str) -> str:
         mode: rule
         log-level: warning
         ipv6: false
+        # Параллельно пробуем v4/v6 при коннекте — быстрее старт
+        tcp-concurrent: true
+        # Единый формат latency для health-check (быстрее переключение)
+        unified-delay: true
+        # Не запускать health-check каждые N сек для одного proxy
+        # (экономит лишние коннекты — у нас один сервер, выбирать не из чего)
+        global-client-fingerprint: chrome
+        find-process-mode: 'off'
+        keep-alive-interval: 30
+
+        # Через какой sniffer определяем target для split-routing
+        sniffer:
+          enable: true
+          sniff:
+            HTTP:
+              ports: [80, 8080-8880]
+              override-destination: true
+            TLS:
+              ports: [443, 8443]
+            QUIC:
+              ports: [443]
+          force-dns-mapping: true
+          parse-pure-ip: true
 
         dns:
           enable: true
           ipv6: false
+          # Не используем H3 (QUIC) для DNS — у Railway нет UDP вообще,
+          # H3-резолв через прокси-туннель отвалится таймаутом
+          prefer-h3: false
           enhanced-mode: fake-ip
           fake-ip-range: 198.18.0.1/16
           fake-ip-filter:
@@ -115,10 +141,17 @@ def _clash_yaml(host: str) -> str:
             network: ws
             servername: {host}
             client-fingerprint: chrome
+            # smux ВЫКЛЮЧЕН специально — для видео параллельные TCP лучше
+            # одного мультиплекса (head-of-line blocking при потерях)
+            smux:
+              enabled: false
             ws-opts:
               path: {ws_path!r}
               headers:
                 Host: {host}
+              # Передаём фрагменты сразу клиенту, без накопления
+              max-early-data: 2048
+              early-data-header-name: Sec-WebSocket-Protocol
 
         proxy-groups:
           - name: PROXY

@@ -180,6 +180,70 @@ docker run --rm -p 8080:8080 \
 * XRay блокирует доступ во внутренние сети (`geoip:private`) и BitTorrent.
 * Для смены любого секрета — поменяйте переменную в Railway и сделайте Redeploy.
 
+## Ускорение через Cloudflare (опционально)
+
+Railway даёт один регион (US-East). Из РФ до него ~100–150 ms через половину планеты — это ограничивает скорость видео и старт стримов.
+
+Решение — обернуть Railway в Cloudflare proxy. Тогда трафик идёт по схеме:
+
+```
+вы (РФ) → ближайший CF POP (~30 ms) → CF backbone (быстрая магистраль) → Railway
+```
+
+У CF есть POP'ы в Москве и Питере, плюс прямые пиринги с большинством российских ISP. Реальный прирост скорости — 1.5–2x для видео и ощутимое снижение задержек.
+
+Бонусом: РКН не может заблокировать CF целиком (там пол-интернета), а Railway-IP перестаёт светиться.
+
+### Как подключить
+
+1. **Купите домен.** Любой, $1/год хватит (`.xyz`, `.shop`, `.online` через Namecheap или Porkbun).
+
+2. **Подключите домен к Cloudflare:**
+   - <https://dash.cloudflare.com> → **Add a Site** → ввести домен → Free plan
+   - У вашего регистратора (Namecheap/Porkbun) поменять NS-записи на те, что покажет CF (2 nameserver'а вида `xxx.ns.cloudflare.com`)
+   - Подождать 5–60 минут пока NS пропагируются
+
+3. **В Railway:** Settings → Networking → **Custom Domain** → ввести `vpn.вашдомен.xyz` → Railway покажет CNAME-значение вида `xxxxxxxx.up.railway.app`
+
+4. **В Cloudflare DNS:**
+   - DNS → **Add record** → Type: `CNAME` → Name: `vpn` → Target: `xxxxxxxx.up.railway.app` (из Railway) → **Proxy status: Proxied (orange cloud)** → Save
+   - Также может понадобиться TXT-запись от Railway для верификации — добавьте её, **grey cloud** (DNS only)
+
+5. **SSL/TLS в Cloudflare:**
+   - SSL/TLS → Overview → выбрать режим **Full** (не Strict, не Flexible)
+   - Edge Certificates → включить **Always Use HTTPS**, **Automatic HTTPS Rewrites**, **TLS 1.3**
+
+6. **WebSocket в Cloudflare** (обычно включён по умолчанию):
+   - Network → **WebSockets: ON**
+
+7. **В Railway → Settings → Variables** добавить:
+   ```
+   PUBLIC_HOST=vpn.вашдомен.xyz
+   ```
+   Затем Redeploy.
+
+8. **Перегенерировать subscription** — откройте dashboard по новому домену `https://vpn.вашдомен.xyz<SUB_PATH>/` → возьмите новый Clash subscription URL → в Hiddify обновите подписку.
+
+### Что меняется в работе
+
+| Параметр | До CF | После CF |
+|---|---|---|
+| Латенси (РФ→сервер) | ~100–150 ms | ~30–60 ms |
+| TLS handshake | Прямой к Railway | Резолвит CF edge |
+| DNS-фингерпринт для ТСПУ | `*.up.railway.app` | `vpn.вашдомен.xyz` (выглядит как обычный сайт) |
+| YouTube 1080p | Иногда буферит | Гладко |
+
+Минусы: добавляется один лишний хоп. На low-latency задачи (gaming) хуже, на throughput (видео) — лучше.
+
+### Если CF тоже начнёт блокироваться
+
+РКН периодически блочит куски CF IP. Workaround:
+1. CF → SSL/TLS → **Origin Server** → создать сертификат для Railway upstream (опционально)
+2. Использовать **CF Tunnel** (`cloudflared` внутри контейнера) вместо обычного proxy — тогда никакого публичного IP, только outbound tunnel к CF
+3. Использовать чужой CF Worker как фронт (есть готовые шаблоны для VLESS-over-Worker)
+
+---
+
 ## Известные ограничения Railway
 
 * **Нет UDP** наружу → нельзя использовать Reality/Hysteria/WireGuard. Только TCP-based (что мы и делаем).
