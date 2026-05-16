@@ -2,6 +2,35 @@
   "log": {
     "loglevel": "warning"
   },
+  "dns": {
+    "servers": [
+      {
+        "address": "https://1.1.1.1/dns-query",
+        "domains": [
+          "geosite:google",
+          "geosite:youtube",
+          "geosite:netflix",
+          "geosite:twitter",
+          "geosite:facebook",
+          "geosite:tiktok",
+          "domain:youtube.com",
+          "domain:googlevideo.com",
+          "domain:ytimg.com",
+          "domain:ggpht.com",
+          "domain:youtu.be"
+        ],
+        "queryStrategy": "UseIPv4"
+      },
+      {
+        "address": "https://dns.google/dns-query",
+        "queryStrategy": "UseIPv4"
+      },
+      "1.1.1.1",
+      "8.8.8.8"
+    ],
+    "queryStrategy": "UseIPv4",
+    "disableCache": false
+  },
   "inbounds": [
     {
       "tag": "vless-ws-in",
@@ -28,8 +57,9 @@
       },
       "sniffing": {
         "enabled": true,
-        "destOverride": ["http", "tls", "quic"],
-        "routeOnly": false
+        "destOverride": ["http", "tls"],
+        "routeOnly": false,
+        "metadataOnly": false
       }
     }
   ],
@@ -38,12 +68,17 @@
       "tag": "direct",
       "protocol": "freedom",
       "settings": {
-        "domainStrategy": "UseIPv4v6"
+        "domainStrategy": "UseIPv4"
       }
     },
     {
       "tag": "block",
-      "protocol": "blackhole"
+      "protocol": "blackhole",
+      "settings": {
+        "response": {
+          "type": "http"
+        }
+      }
     }
   ],
   "routing": {
@@ -62,11 +97,6 @@
       {
         "type": "field",
         "domain": ["ext:ru-blocklist.dat:RU"],
-        "outboundTag": "block"
-      },
-      {
-        "type": "field",
-        "ip": ["geoip:ru"],
         "outboundTag": "block"
       }
     ]
